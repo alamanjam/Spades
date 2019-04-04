@@ -11,6 +11,7 @@ import {
   View,
 } from 'react-native';
 
+import firebase from 'firebase';
 import { WebBrowser } from 'expo';
 
 import { MonoText } from '../components/StyledText';
@@ -19,7 +20,22 @@ import {Button, Icon, Card, Header} from 'react-native-elements';
 
 import ClubScreen from '../screens/ClubScreen';
 
+      var config = {
+    apiKey: "AIzaSyDB8VXxMiqunnhG0lLpQxqQMwf8MVbOOsA",
+    authDomain: "fir-test-72784.firebaseapp.com",
+    databaseURL: "https://fir-test-72784.firebaseio.com",
+    projectId: "fir-test-72784",
+    storageBucket: "fir-test-72784.appspot.com",
+    messagingSenderId: "752171087612"
+  };
+  firebase.initializeApp(config);
+
 export default class HomeScreen extends React.Component {
+  state = {
+    isLoading: true,
+    uniqname: "",
+    clubs: ""
+  };
   static navigationOptions = {
     header: <Header
         leftComponent={<Button icon=
@@ -34,9 +50,32 @@ export default class HomeScreen extends React.Component {
     await AsyncStorage.clear();
     this.props.navigation.navigate('Auth');
   };
+  componentDidMount() {
+    AsyncStorage.getItem('userToken').then((token) => {
+      this.setState({
+        uniqname: token
+      });
+      var userToken = this.state.uniqname;
+    var usersRef = firebase.database().ref('/users/' + token);
+    usersRef.once('value', (snapshot) => {
+  this.setState({
+    isLoading: false,
+    clubs: snapshot.val().clubs
+  })
+});
+    });
+    
+  };
+
+x
   render() {
     const nav = this.props.navigation;
-    return (
+    if(this.state.isLoading)
+    {
+      return <Text>loading...</Text>;
+    }
+    console.log(this.state);
+      var lmao = 
       <View style={styles.container}>
       
         <ScrollView style={styles.container} contentContainerStyle={styles.contentContainer} pagingEnabled = {true}>
@@ -56,10 +95,9 @@ export default class HomeScreen extends React.Component {
           </Button>
         </ScrollView>
       </View>
-    );
+      return lmao;
   }
 }
-
 
 const styles = StyleSheet.create({
   container: {

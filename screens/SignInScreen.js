@@ -8,6 +8,7 @@ export default class SignInScreen extends React.Component {
     this.state = {
       signedIn: false,
       name: "",
+      id: "",
       photoUrl: ""
     };
   }
@@ -22,8 +23,9 @@ export default class SignInScreen extends React.Component {
       })
 
       if (result.type === "success") {
-          await AsyncStorage.setItem('userToken', 'abc');
-          this.props.navigation.navigate('App');
+          string = result.user.email.substring(0, result.user.email.indexOf("@"));
+          await AsyncStorage.setItem('userToken', string);
+          this.props.navigation.navigate('Home');
       } 
       else {
         console.log("cancelled")
