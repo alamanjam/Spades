@@ -29,13 +29,16 @@ import ClubScreen from '../screens/ClubScreen';
     messagingSenderId: "752171087612"
   };
   firebase.initializeApp(config);
-
+var cl = [];
 export default class HomeScreen extends React.Component {
-  state = {
+  constructor(props){
+    super(props);
+    this.state = ({
     isLoading: true,
     uniqname: "",
-    clubs: ""
-  };
+    clubs: []
+  });
+  }
   static navigationOptions = {
     header: <Header
         leftComponent={<Button icon=
@@ -56,13 +59,23 @@ export default class HomeScreen extends React.Component {
         uniqname: token
       });
       var userToken = this.state.uniqname;
-    var usersRef = firebase.database().ref('/users/' + token);
-    usersRef.once('value', (snapshot) => {
-  this.setState({
-    isLoading: false,
-    clubs: snapshot.val().clubs
-  })
+    var usersRef = firebase.database().ref();
+    usersRef.child('/users/' + token + '/clubs/').once('value').then(function(snapshot) {
+        snapshot.forEach((child)=> {
+          usersRef.child('/clubs/' + child.val()).once('value').then(function(clubssnapshot) {
+            cl.push({
+              name: clubssnapshot.val().name,
+              url: clubssnapshot.val().url
+            });
+            console.log(cl);
+          });
+        });
+            this.setState({
+          isLoading: false
+        });
+
 });
+
     });
     
   };
@@ -75,7 +88,7 @@ x
       return <Text>loading...</Text>;
     }
     console.log(this.state);
-      var lmao = 
+    return(
       <View style={styles.container}>
       
         <ScrollView style={styles.container} contentContainerStyle={styles.contentContainer} pagingEnabled = {true}>
@@ -84,18 +97,24 @@ x
           </View>
           
           <View style={{flexDirection: 'row'}}>
-          <TouchableOpacity style={styles.cardContainer} onPress={() => nav.navigate('ClubScreen', {club: 'Michigan Hackers'})}>
+          {
+              this.state.clubs.map((name, url) =>{
+                <TouchableOpacity style={styles.cardContainer} onPress={() => nav.navigate('ClubScreen', {club: 'Michigan Hackers'})}>
             <Card image={{uri:"https://se-infra-imageserver2.azureedge.net/clink/images/d575c35c-d2e0-489d-8a8a-039b0b668c62c21bde67-05e1-4f6e-9e3d-0db57b682736.png?preset=med-sq"}}
               >
-              <Text style={styles.cardTitle}>Michigan Hackers</Text>
+              <Text style={styles.cardTitle}>{clubs.name}}</Text>
             </Card>
           </TouchableOpacity>
+              })
+
+          }
+          
           </View>
           <Button title = "sign out" onPress={this._signOutAsync}>
           </Button>
         </ScrollView>
       </View>
-      return lmao;
+      );
   }
 }
 
