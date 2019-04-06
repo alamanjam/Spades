@@ -33,11 +33,11 @@ var cl = [];
 export default class HomeScreen extends React.Component {
   constructor(props){
     super(props);
-    this.state = ({
-    isLoading: true,
-    uniqname: "",
-    clubs: []
-  });
+    this.state = {
+      uniqname: "",
+      isLoading: true,
+      clubs: []
+    }
   }
   static navigationOptions = {
     header: <Header
@@ -53,41 +53,66 @@ export default class HomeScreen extends React.Component {
     await AsyncStorage.clear();
     this.props.navigation.navigate('Auth');
   };
-  componentDidMount() {
-    AsyncStorage.getItem('userToken').then((token) => {
-      this.setState({
-        uniqname: token
-      });
-      var userToken = this.state.uniqname;
-    var usersRef = firebase.database().ref();
-    usersRef.child('/users/' + token + '/clubs/').once('value').then(function(snapshot) {
-        snapshot.forEach((child)=> {
-          usersRef.child('/clubs/' + child.val()).once('value').then(function(clubssnapshot) {
-            cl.push({
-              name: clubssnapshot.val().name,
-              url: clubssnapshot.val().url
-            });
-            console.log(cl);
-          });
+  async componentDidMount(){
+          AsyncStorage.getItem('userToken').then(function(token) {
+       var ref = firebase.database().ref();
+       console.log(token);
+     var reads = [];
+     
+       return ref.child('/users/' + token + '/clubs/').once('value').then(function(snapshot) {
+//      ^^^^^^^^^^^^^^
+       snapshot.forEach(function(childSnapshot) {
+          //console.log(ch ildSnapshot.val());
+             var promise = ref.child('/clubs/' + childSnapshot.val()).once('value');
+          reads.push(promise);
+     });
+       return Promise.all(reads);
+      }).then( function(vals){
+        //console.log(vals);
+        this.setState({
+          uniqname:token,
+          isLoading:false,
+          clubs:vals
         });
-            this.setState({
-          isLoading: false
-        });
+      }.bind(this));
+    }.bind(this));
+    };
+//     var usersRef = firebase.database().ref();
+//     usersRef.child('/users/' + token + '/clubs/').once('value').then(function(snapshot) {
+//         snapshot.forEach((child)=> {
+//           usersRef.child('/clubs/' + child.val()).once('value').then(function(clubssnapshot) {
+//             cl.push({
+//               name: clubssnapshot.val().name,
+//             });
+//             console.log(cl);
+//           });
+//         });
+//             this.setState({
+//           isLoading: false
+//         });
 
-});
+// });
 
-    });
-    
-  };
+    //};
 
-x
   render() {
     const nav = this.props.navigation;
     if(this.state.isLoading)
     {
       return <Text>loading...</Text>;
     }
-    console.log(this.state);
+    var nameurls = [];
+    for(var x = 0; x < this.state.clubs.length; ++x)
+    {
+      var n = JSON.parse(JSON.stringify(this.state.clubs[x])).name;
+      var url = JSON.parse(JSON.stringify(this.state.clubs[x])).url;
+      nameurls.push({
+        name:n,
+        url:url
+      })
+    }
+    console.log(nameurls);
+
     return(
       <View style={styles.container}>
       
@@ -98,15 +123,14 @@ x
           
           <View style={{flexDirection: 'row'}}>
           {
-              this.state.clubs.map((name, url) =>{
-                <TouchableOpacity style={styles.cardContainer} onPress={() => nav.navigate('ClubScreen', {club: 'Michigan Hackers'})}>
-            <Card image={{uri:"https://se-infra-imageserver2.azureedge.net/clink/images/d575c35c-d2e0-489d-8a8a-039b0b668c62c21bde67-05e1-4f6e-9e3d-0db57b682736.png?preset=med-sq"}}
-              >
-              <Text style={styles.cardTitle}>{clubs.name}}</Text>
+            nameurls.map((item, i)=>{
+              return <TouchableOpacity key = {i} style={styles.cardContainer} 
+            onPress={() => nav.navigate('ClubScreen', {club: 'Michigan Hackers', img: 'https://se-infra-imageserver2.azureedge.net/clink/images/d575c35c-d2e0-489d-8a8a-039b0b668c62c21bde67-05e1-4f6e-9e3d-0db57b682736.png?preset=med-sq'})}>
+            <Card image={{uri:item.url}}>
+              <Text style={styles.cardTitle}>{item.name}</Text>
             </Card>
-          </TouchableOpacity>
-              })
-
+          </TouchableOpacity>;
+            })
           }
           
           </View>
